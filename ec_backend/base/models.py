@@ -116,3 +116,18 @@ class ShippingAdress(models.Model):
 
     def __str__(self):
         return str(self.address)
+
+class Coupon(models.Model):
+    name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Nombre de cupon")
+    code = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Código")
+    discount = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Descuento")
+    active = models.BooleanField(default=False, verbose_name="Activo")
+    _id = models.AutoField(primary_key=True, editable=False)
+
+    class Meta:
+        verbose_name= "Cupon"
+        verbose_name_plural= "Cupones"
+        ordering = ['_id']
+
+    def __str__(self):
+        return str(self.name)

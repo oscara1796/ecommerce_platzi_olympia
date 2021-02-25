@@ -37,9 +37,14 @@ class ShippingAdressAdmin(admin.ModelAdmin):
     list_display = ('_id', 'order', 'address', 'city', 'country', 'shippingPrice')
     ordering = ('_id',)
 
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ('_id', 'name', 'code', 'discount', 'active')
+    ordering = ('_id',)
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Review, ReviewAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
 admin.site.register(ShippingAdress, ShippingAdressAdmin)
+admin.site.register(Coupon, CouponAdmin)
