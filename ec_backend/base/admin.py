@@ -9,8 +9,7 @@ class CategoryAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
 
-    list_display = ('name', 'user', 'brand', 'price', 'countInStock', 'rating')
-    list_display = ('name', 'user', 'brand', 'price', 'countInStock', 'rating')
+    list_display = ('name', 'user', 'brand', 'price', 'countInStock', 'out_of_stock', 'rating')
     ordering = ('createdAt', 'rating', 'price', 'countInStock')
     search_fields = ('name', 'user__first__name', 'brand', 'price', 'categories__name')
     list_filter =('categories__name',)
@@ -38,7 +37,7 @@ class ShippingAdressAdmin(admin.ModelAdmin):
     ordering = ('_id',)
 
 class CouponAdmin(admin.ModelAdmin):
-    list_display = ('_id', 'name', 'code', 'discount', 'active')
+    list_display = ('_id', 'name', 'code', 'discount', 'percentage', 'active')
     ordering = ('_id',)
 
 admin.site.register(Category, CategoryAdmin)
