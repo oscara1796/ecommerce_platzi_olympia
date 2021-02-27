@@ -30,6 +30,7 @@ class Product(models.Model):
     numReviews = models.IntegerField(null=True, blank=True, default=0, verbose_name= "Num. reviews")
     price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Precio")
     countInStock = models.IntegerField(null=True, blank=True, default=0, verbose_name= "Stock")
+    out_of_stock = models.BooleanField(default=False, verbose_name="Agotado")
     createdAt= createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
     _id = models.AutoField(primary_key=True, editable=False)
 
@@ -107,6 +108,8 @@ class ShippingAdress(models.Model):
     postalCode = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Codigo Postal")
     country = models.CharField(max_length=200, null=True, blank=True, verbose_name= "País")
     shippingPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Costo de envio")
+    receiver_first_name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Recibidor primer nombre ")
+    receiver_last_name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Recibidor apellidos")
     _id = models.AutoField(primary_key=True, editable=False)
 
     class Meta:
@@ -121,6 +124,7 @@ class Coupon(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Nombre de cupon")
     code = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Código")
     discount = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Descuento")
+    percentage = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Porcentaje")
     active = models.BooleanField(default=False, verbose_name="Activo")
     _id = models.AutoField(primary_key=True, editable=False)
 
