@@ -22,7 +22,7 @@ class Category(models.Model):
 class Product(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Nombre")
-    image = models.ImageField(upload_to= 'product_images/', null=True, blank=True, verbose_name= "imagen")
+    image = models.ImageField(upload_to= 'product_images/', null=True, blank=True, default='/product_images/placeholder.png', verbose_name= "imagen")
     brand = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Marca")
     categories = models.ManyToManyField(Category, verbose_name="Categorias")
     description = models.TextField(null=True, blank=True, verbose_name= "Descripción")
@@ -121,8 +121,9 @@ class ShippingAdress(models.Model):
         return str(self.address)
 
 class Coupon(models.Model):
+    user= models.ManyToManyField(User, null=True)
     name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Nombre de cupon")
-    code = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Código")
+    code = models.CharField(max_length=200, null=True, blank=True,unique=True, verbose_name= "Código")
     discount = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Descuento")
     percentage = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Porcentaje")
     active = models.BooleanField(default=False, verbose_name="Activo")

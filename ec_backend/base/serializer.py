@@ -1,16 +1,21 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Product, ShippingAdress, OrderItem, Order
+from .models import Product, ShippingAdress, OrderItem, Order, Category, Coupon
 
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = '__all__'
 
 class UserSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField(read_only= True)
     _id = serializers.SerializerMethodField(read_only= True)
     isAdmin = serializers.SerializerMethodField(read_only= True)
+    coupons = serializers.SerializerMethodField(read_only= True)
     class Meta:
         model = User
-        fields = ['id', '_id', 'username', 'email', 'name', 'isAdmin']
+        fields = ['id', '_id', 'username', 'email', 'name', 'isAdmin', 'coupons']
 
     def get__id(self, obj):
         return obj.id
@@ -25,6 +30,11 @@ class UserSerializer(serializers.ModelSerializer):
         if name == '':
             name = obj.email
         return name
+
+    def get_coupons(self, obj):
+        coupons_user = obj.coupon_set.all()
+        coupons = CouponSerializer(coupons_user, many = True)
+        return coupons.data
 
 class UserSerializerWithtoken(UserSerializer):
     token =  serializers.SerializerMethodField(read_only= True)
@@ -77,3 +87,8 @@ class OrderSerializer(serializers.ModelSerializer):
         except:
             user = False
         return user.data
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = '__all__'

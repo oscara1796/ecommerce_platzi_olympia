@@ -1,10 +1,45 @@
 from django.contrib import admin
 from .models import *
+from django.contrib.auth.models import User
 
 # Register your models here.
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ( 'id','username', 'email', 'first_name',)
+    readonly_fields = ('id','show_coupons')
+
+    fieldsets = (
+    #Primer categoria
+        ("Basic info", {
+            'fields': (
+            ('id',),
+            ('email','username'),
+            ('first_name', 'last_name'),
+            ('password',),
+            ('groups',),
+            ('user_permissions',),
+            ('is_staff', 'is_active'),
+            ('is_superuser',),
+            ('last_login',),
+            ('date_joined',),
+            ),
+        }
+        ),
+    #Cupones
+    ("Cupones",{
+        'fields':(
+            ('show_coupons',),
+        ),
+    }),
+    )
+
+    def show_coupons(self, obj):
+        return '\n'.join([c.name for c in obj.coupon_set.all()])
+
+
 
 class CategoryAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
+    list_display = ('_id','name', )
 
 class ProductAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
@@ -47,3 +82,5 @@ admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
 admin.site.register(ShippingAdress, ShippingAdressAdmin)
 admin.site.register(Coupon, CouponAdmin)
+admin.site.unregister(User)
+admin.site.register(User, CustomUserAdmin)

@@ -5,7 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from base.models import Product, OrderItem, Order, ShippingAdress, Coupon
-from base.serializer import ProductSerializer, OrderSerializer
+from base.serializer import ProductSerializer, OrderSerializer, CouponSerializer
 
 from rest_framework import status
 from decimal import Decimal
@@ -30,16 +30,16 @@ def addOrderItems(request):
         order = Order.objects.create(
             user = user,
             paymentMethod = data['paymentMethod'],
-            taxtPrice = data['taxtPrice'],
-            shippingPrice = data['shippingPrice'],
-            totalPrice = data['totalPrice'],
+            taxtPrice = Decimal(data['taxtPrice']),
+            shippingPrice = Decimal(data['shippingPrice']),
+            totalPrice = Decimal(data['totalPrice']),
         )
         coupon = str(data['coupon'])
         coupon_exists = Coupon.objects.filter(code=coupon.upper()).exists()
         if coupon_exists:
             coupon = Coupon.objects.get(code=coupon.upper())
             if coupon.discount:
-                order.discount =  float(coupon.discount)
+                order.discount =  Decimal(coupon.discount)
             else:
                 order.discount =  Decimal(order.totalPrice)*Decimal(coupon.percentage)
             order.save()
@@ -88,8 +88,6 @@ def getMyOrders(request):
 
 @api_view(['GET'])
 def getOrderById(request, pk):
-
-    user = request.user
     try:
         order = Order.objects.get(_id=pk)
         serializer = OrderSerializer(order, many= False)
@@ -107,3 +105,77 @@ def updateOrderToPaid(request, pk):
     order.save()
 
     return Response('Order was paid')
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def showAllCoupon(request):
+    coupons = Coupon.objects.all()
+    serializer = CouponSerializer(coupons, many= True)
+    return Response(serializer.data)
+
+
+@api_view(['POST'])
+def getCoupon(request):
+    data= request.data
+    coupon = str(data['coupon'])
+    print(coupon)
+    try:
+        coupon = Coupon.objects.get(code = coupon.upper())
+        serializer = CouponSerializer(coupon, many= False)
+        return Response(serializer.data)
+    except:
+        return Response({'detail':'coupon does not exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['DELETE'])
+@permission_classes([IsAdminUser])
+def deleteCoupon(request, pk):
+    data= request.data
+    coupon = Coupon.objects.get(_id = pk)
+    coupon.delete()
+    return Response({'Coupon deleted'})
+
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def createCoupon(request):
+    try:
+        data= request.data
+
+        coupon = Coupon.objects.create(
+            name = data['name'],
+            code = data['code'],
+            active = data['active'].lower().title()
+        )
+
+        if data['discount']:
+            coupon.discount = Decimal(data['discount'])
+        elif data['percentage']:
+            coupon.percentage = Decimal(data['percentage'])
+
+        coupon.save()
+        serializer = CouponSerializer(coupon, many= False)
+        return Response(serializer.data)
+    except:
+        return Response({'detail':'Can\'t create coupon verify code must be unique'}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def updateCoupon(request, pk):
+    try:
+        data= request.data
+
+        coupon = Coupon.objects.get(_id=pk)
+        coupon.name = data['name'],
+        coupon.code = data['code'],
+        coupon.active = data['active'].lower().title()
+
+        if data['discount']:
+            coupon.discount = Decimal(data['discount'])
+        elif data['percentage']:
+            coupon.percentage = Decimal(data['percentage'])
+
+        coupon.save()
+        serializer = CouponSerializer(coupon, many= False)
+        return Response(serializer.data)
+    except:
+        return Response({'detail':'Can\'t modify coupon verify code must be unique'}, status=status.HTTP_400_BAD_REQUEST)

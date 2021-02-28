@@ -56,7 +56,7 @@ def registerUser(request):
         serializer = UserSerializerWithtoken(user, many= False)
         return Response(serializer.data)
     except:
-        message = {'detail': 'Usuario con este email ya existe'}
+        message = {'detail': 'user does not exists'}
         return Response(message, status= status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
@@ -89,3 +89,25 @@ def updateUser(request, pk):
     user.save()
     serializer = UserSerializer(user, many=False)
     return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def addCouponToUser(request, pk):
+    error_message = 'coupon does not exists'
+    try:
+            data = request.data
+            coupon = data['coupon']
+            coupon = Coupon.objects.get(code = coupon.upper())
+            user = User.objects.get(id=pk)
+            if request.user == user:
+                user.coupon_set.add(coupon)
+
+                user.save()
+                serializer = UserSerializer(user, many=False)
+                return Response(serializer.data)
+            else:
+                raise Exception('User is not the current request user')
+    except Exception as e:
+        error_message = e
+        message = {'detail': f'{error_message}'}
+        return Response(message, status= status.HTTP_400_BAD_REQUEST)
