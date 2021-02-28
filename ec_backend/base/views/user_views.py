@@ -73,3 +73,19 @@ def deleteUser(request, pk):
     userForDeletion = User.objects.get(id=pk)
     userForDeletion.delete()
     return Response('user deleted')
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def updateUser(request, pk):
+    user = User.objects.get(id=pk)
+
+    data = request.data
+
+    user.first_name = data['name']
+    user.last_name = data['email']
+    user.email = data['email']
+    user.is_staff = data['isAdmin']
+
+    user.save()
+    serializer = UserSerializer(user, many=False)
+    return Response(serializer.data)
