@@ -35,7 +35,9 @@ class CustomUserAdmin(admin.ModelAdmin):
     def show_coupons(self, obj):
         return '\n'.join([c.name for c in obj.coupon_set.all()])
 
-
+class UserStripeAdmin(admin.ModelAdmin):
+    readonly_fields = ('createdAt',)
+    list_display = ('_id','user', 'stripe_customer_id',)
 
 class CategoryAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
@@ -55,7 +57,7 @@ class ProductAdmin(admin.ModelAdmin):
 
 class ReviewAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
-    list_display = ('name','user', 'rating')
+    list_display = ('_id','name','user', 'rating')
 
 class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt','deliveredAT', 'paidAt')
@@ -84,3 +86,4 @@ admin.site.register(ShippingAdress, ShippingAdressAdmin)
 admin.site.register(Coupon, CouponAdmin)
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
+admin.site.register(UserStripe, UserStripeAdmin)

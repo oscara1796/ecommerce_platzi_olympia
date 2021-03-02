@@ -3,6 +3,20 @@ from django.contrib.auth.models import User
 
 # Create your models here.
 
+class UserStripe(models.Model):
+    _id = models.AutoField(primary_key=True, editable=False)
+    user = models.OneToOneField(User,on_delete=models.CASCADE, null=True, blank=True)
+    stripe_customer_id= models.CharField(max_length=100, verbose_name= "Nombre")
+    createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
+
+    class Meta:
+        verbose_name= "User-stripe-id"
+        verbose_name_plural= "User-stripe-ids"
+        ordering = ['_id']
+
+    def __str__(self):
+        return self.stripe_customer_id
+
 
 class Category(models.Model):
     _id = models.AutoField(primary_key=True, editable=False)
@@ -32,6 +46,7 @@ class Product(models.Model):
     countInStock = models.IntegerField(null=True, blank=True, default=0, verbose_name= "Stock")
     out_of_stock = models.BooleanField(default=False, verbose_name="Agotado")
     createdAt= createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
+    stripe_product_id = models.CharField(max_length=200, null=True, blank=True, verbose_name= "stripe_product_id")
     _id = models.AutoField(primary_key=True, editable=False)
 
     class Meta:

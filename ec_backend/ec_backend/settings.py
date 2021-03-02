@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 
+#password of stripe
+#equipoplatzi
+#platziolympia@gmail.com
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -49,7 +54,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     #Corse-headers
     'corsheaders.middleware.CorsMiddleware',
-
+    'django_ip_geolocation.middleware.IpGeolocationMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -58,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
 
 REST_FRAMEWORK = {
@@ -175,3 +181,23 @@ MEDIA_ROOT = 'static/images'
 #CORSE_HEADERS
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+#STRIPE
+
+STRIPE_SECRET_KEY = "sk_test_51IQ2A6HsQqQz73R6wiTlwm0lsh4ikn8dxUOipHZVSOhcrQeumrSKEHmrPoK4f5mwRe0ZYM9CI922z1WzhlhE5aBM00yDvUcCsh"
+
+
+#GEOLOCATION
+
+IP_GEOLOCATION_SETTINGS = {
+    'BACKEND': 'django_ip_geolocation.backends.IPGeolocationAPI',
+    'BACKEND_API_KEY': '',
+    'BACKEND_EXTRA_PARAMS': {},
+    'BACKEND_USERNAME': '',
+    'RESPONSE_HEADER': 'X-IP-Geolocation',
+    'ENABLE_REQUEST_HOOK': True,
+    'ENABLE_RESPONSE_HOOK': True,
+    'ENABLE_COOKIE': False,
+    'FORCE_IP_ADDR': '187.190.202.78',
+    'USER_CONSENT_VALIDATOR': None
+}

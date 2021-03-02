@@ -14,6 +14,7 @@ from datetime import datetime
 
 @api_view(['POST'])
 def addOrderItems(request):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
     user = None
     print("USER IS AUTHENTICATED: ", request.user.is_authenticated)
     if request.user.is_authenticated:
@@ -87,6 +88,15 @@ def getMyOrders(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
+def getOrders(request):
+    user = request.user
+    orders = Order.objects.all()
+    serializer  = OrderSerializer(orders, many= True)
+
+    return Response(serializer.data)
+
+@api_view(['GET'])
 def getOrderById(request, pk):
     try:
         order = Order.objects.get(_id=pk)
@@ -105,6 +115,17 @@ def updateOrderToPaid(request, pk):
     order.save()
 
     return Response('Order was paid')
+
+@api_view(['PUT'])
+@permission_classes([IsAdminUser])
+def updateOrderToDelivered(request, pk):
+    order = Order.objects.get(_id=pk)
+
+    order.isDelivered = True
+    order.deliveredAT =datetime.now()
+    order.save()
+
+    return Response('Order was delivered')
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
