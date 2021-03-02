@@ -17,5 +17,7 @@ def checkStock(sender, instance, **kwargs):
     else:
         product.out_of_stock = False
 
+
+
 pre_save.connect(updateUser,sender=User)
 pre_save.connect(checkStock,sender=Product)

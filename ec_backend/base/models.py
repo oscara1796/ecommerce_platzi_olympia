@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 class UserStripe(models.Model):
     _id = models.AutoField(primary_key=True, editable=False)
     user = models.OneToOneField(User,on_delete=models.CASCADE, null=True, blank=True)
-    stripe_customer_id= models.CharField(max_length=100, verbose_name= "Nombre")
+    stripe_customer_id= models.CharField(max_length=100, verbose_name= "stripe customer id")
     createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
 
     class Meta:
@@ -16,6 +16,21 @@ class UserStripe(models.Model):
 
     def __str__(self):
         return self.stripe_customer_id
+
+class UserPaymentMethodsStripe(models.Model):
+    _id = models.AutoField(primary_key=True, editable=False)
+    user = models.OneToOneField(User,on_delete=models.CASCADE, null=True, blank=True)
+    stripe_payment_id= models.CharField(max_length=100, verbose_name= "stripe ")
+    default = models.BooleanField(default=True, verbose_name="default")
+    createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
+
+    class Meta:
+        verbose_name= "User-payment-method-stripe-id"
+        verbose_name_plural= "User-payment-method-stripe-ids"
+        ordering = ['_id']
+
+    def __str__(self):
+        return self.stripe_payment_id
 
 
 class Category(models.Model):
@@ -117,6 +132,7 @@ class OrderItem(models.Model):
 
 
 class ShippingAdress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     order = models.OneToOneField(Order, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Domicilio ")
     city = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Ciudad")
@@ -125,6 +141,7 @@ class ShippingAdress(models.Model):
     shippingPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Costo de envio")
     receiver_first_name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Recibidor primer nombre ")
     receiver_last_name = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Recibidor apellidos")
+    default = models.BooleanField(default=True, verbose_name="default")
     _id = models.AutoField(primary_key=True, editable=False)
 
     class Meta:

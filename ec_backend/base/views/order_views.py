@@ -100,6 +100,8 @@ def addOrderItems(request):
         serializer = OrderSerializer(order, many = False)
         return Response(serializer.data)
 
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def getMyOrders(request):

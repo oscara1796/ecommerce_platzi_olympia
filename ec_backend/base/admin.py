@@ -39,6 +39,10 @@ class UserStripeAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
     list_display = ('_id','user', 'stripe_customer_id',)
 
+class UserPaymentMethodsStripeAdmin(admin.ModelAdmin):
+    readonly_fields = ('createdAt',)
+    list_display = ('_id','user', 'stripe_payment_id', 'default')
+
 class CategoryAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt',)
     list_display = ('_id','name', )
@@ -70,7 +74,7 @@ class OrderItemAdmin(admin.ModelAdmin):
     ordering = ('_id',)
 
 class ShippingAdressAdmin(admin.ModelAdmin):
-    list_display = ('_id', 'order', 'address', 'city', 'country', 'shippingPrice')
+    list_display = ('_id', 'order', 'address', 'city', 'country', 'shippingPrice', 'default')
     ordering = ('_id',)
 
 class CouponAdmin(admin.ModelAdmin):
@@ -87,3 +91,4 @@ admin.site.register(Coupon, CouponAdmin)
 admin.site.unregister(User)
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(UserStripe, UserStripeAdmin)
+admin.site.register(UserPaymentMethodsStripe, UserPaymentMethodsStripeAdmin)

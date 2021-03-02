@@ -11,4 +11,6 @@ urlpatterns = [
     path('addcoupon/<str:pk>/', views.addCouponToUser, name ='user-addcoupon'),
     path('update/<str:pk>/', views.updateUser, name ='user-update'),
     path('delete/<str:pk>/', views.deleteUser, name ='user-delete'),
+    path('addpaymentmethod/<str:pk>/', views.addPaymentMethod, name ='user-addPaymentMethod'),
+    path('retrievepaymentmethod/<str:pk>/', views.retrievePaymentMethods, name ='user-addPaymentMethod'),
 ]

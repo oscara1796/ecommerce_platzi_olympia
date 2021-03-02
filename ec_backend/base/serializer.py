@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Product, ShippingAdress, OrderItem, Order, Category, Coupon, Review
+from .models import Product, ShippingAdress, OrderItem, Order, Category, Coupon, Review, UserPaymentMethodsStripe
 
 class CouponSerializer(serializers.ModelSerializer):
     class Meta:
@@ -35,6 +35,11 @@ class UserSerializer(serializers.ModelSerializer):
         coupons_user = obj.coupon_set.all()
         coupons = CouponSerializer(coupons_user, many = True)
         return coupons.data
+
+class UserPaymentMethodsStripeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPaymentMethodsStripe
+        fields = '__all__'
 
 class UserSerializerWithtoken(UserSerializer):
     token =  serializers.SerializerMethodField(read_only= True)

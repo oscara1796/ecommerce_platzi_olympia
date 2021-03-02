@@ -7,7 +7,7 @@ from base.serializer import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
-from base.models import UserStripe
+from base.models import UserStripe, UserPaymentMethodsStripe
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 import stripe
@@ -132,4 +132,58 @@ def addCouponToUser(request, pk):
     except Exception as e:
         error_message = e
         message = {'detail': f'{error_message}'}
+        return Response(message, status= status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def addPaymentMethod(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    stripe_payment_id=stripe.PaymentMethod.create(
+      type="card",
+      card={
+        "number": data['card-number'],
+        "exp_month": data['card-exp-month'],
+        "exp_year": data['card-exp-year'],
+        "cvc": data['card-cvc'],
+      },
+    )
+    stripe_customer = user.userstripe
+
+    stripe.PaymentMethod.attach(
+      stripe_payment_id.id,
+      customer=stripe_customer.stripe_customer_id,
+    )
+
+    payment_obj = UserPaymentMethodsStripe.objects.all()
+
+    for pay_obj in payment_obj:
+        pay_obj.default = False
+        pay_obj.save()
+    
+    paymentuser_method_stripe = UserPaymentMethodsStripe.objects.create(
+        user= user,
+        stripe_payment_id= stripe_payment_id.id,
+        default= True,
+    )
+    return Response('payment added')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def retrievePaymentMethods(request, pk):
+    try:
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        user = User.objects.get(id=pk)
+        stripe_customer = user.userstripe
+        users_payment_methods= stripe.PaymentMethod.list(
+          customer=stripe_customer.stripe_customer_id,
+          type="card",
+        )
+        print(users_payment_methods)
+        return Response(users_payment_methods)
+    except:
+        message = {'detail': 'User does not have payment methods'}
         return Response(message, status= status.HTTP_400_BAD_REQUEST)
