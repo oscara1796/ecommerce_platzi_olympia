@@ -16,11 +16,34 @@ from datetime import datetime
 def addOrderItems(request):
     stripe.api_key = settings.STRIPE_SECRET_KEY
     user = None
+    data = request.data
+
+    #Verify payment methods in stripe
     print("USER IS AUTHENTICATED: ", request.user.is_authenticated)
     if request.user.is_authenticated:
         user = request.user
+        stripe_customer = user.userstripe
+        custom_payment_methods= stripe.PaymentMethod.list(
+          customer=stripe_customer.stripe_customer_id,
+          type="card",
+        )
 
-    data = request.data
+        if len(custom_payment_methods.data) == 0:
+            stripe_payment=stripe.PaymentMethod.create(
+              type="card",
+              card={
+                "number": data['card-number'],
+                "exp_month": data['card-exp-month'],
+                "exp_year": data['card-exp-year'],
+                "cvc": data['card-cvc'],
+              },
+            )
+            stripe.PaymentMethod.attach(
+              stripe_payment.id,
+              customer=stripe_customer.stripe_customer_id,
+            )
+        else:
+            pass
 
     orderItems = data['orderItems']
 
