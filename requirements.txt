@@ -1,0 +1,7 @@
+django
+pillow
+stripe
+django-cors-headers
+djangorestframework
+django-ip-geolocation
+pycountry
