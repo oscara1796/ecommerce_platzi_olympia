@@ -6,6 +6,7 @@
 	*traer todos los payment methods
 	*añadir un campo booleano al payment method para poner como default 
 	*crear view para cambiar de default el payment method
+*****TERMINADO
 
 -las direcciones registradas a un cliente
 	*pasar como foreign key el usuario a shipping address
