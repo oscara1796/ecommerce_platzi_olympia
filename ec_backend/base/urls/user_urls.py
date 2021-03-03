@@ -13,4 +13,9 @@ urlpatterns = [
     path('delete/<str:pk>/', views.deleteUser, name ='user-delete'),
     path('addpaymentmethod/<str:pk>/', views.addPaymentMethod, name ='user-addPaymentMethod'),
     path('retrievepaymentmethod/<str:pk>/', views.retrievePaymentMethods, name ='user-addPaymentMethod'),
+    path('changedefaultpayment/<str:pk>/', views.changeDefaultPaymentMethod, name ='user-changeDefaultPaymentMethod'),
+    path('addshippingaddress/<str:pk>/', views.addShippingaddress, name ='user-addShippingaddress'),
+    path('retrieveshippingaddress/<str:pk>/', views.retrieveShippingaddress, name ='user-retrieveShippingaddress'),
+    path('deleteshippingaddress/<str:pk>/', views.deleteShippingaddress, name ='user-deleteShippingaddress'),
+    path('changedefault/shippingaddress/<str:pk>/', views.changeDefaultShippingaddress, name ='user-changeDefaultShippingaddress'),
 ]

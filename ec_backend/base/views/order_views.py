@@ -4,32 +4,31 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
-from base.models import Product, OrderItem, Order, ShippingAdress, Coupon
+from base.models import Product, OrderItem, Order, ShippingAdress, Coupon, UserPaymentMethodsStripe
 from base.serializer import ProductSerializer, OrderSerializer, CouponSerializer
 
 from rest_framework import status
 from decimal import Decimal
 from datetime import datetime
+from currency_converter import CurrencyConverter
 
 
-@api_view(['POST'])
-def addOrderItems(request):
+def stripe_payment_management(data, user, convertion, currency):
     stripe.api_key = settings.STRIPE_SECRET_KEY
-    user = None
-    data = request.data
-
-    #Verify payment methods in stripe
-    print("USER IS AUTHENTICATED: ", request.user.is_authenticated)
-    if request.user.is_authenticated:
-        user = request.user
+    payment_intent= None
+    if user.is_authenticated:
         stripe_customer = user.userstripe
-        custom_payment_methods= stripe.PaymentMethod.list(
-          customer=stripe_customer.stripe_customer_id,
-          type="card",
-        )
+        payment_methods =UserPaymentMethodsStripe.objects.filter(user=user)
+        default_payment_method= None
+        if len(payment_methods) != 0:
+            for payment_method in payment_methods:
+                if payment_method.default == True:
+                    default_payment_method= payment_method
+                    break
 
-        if len(custom_payment_methods.data) == 0:
-            stripe_payment=stripe.PaymentMethod.create(
+
+        else:
+            stripe_payment_id=stripe.PaymentMethod.create(
               type="card",
               card={
                 "number": data['card-number'],
@@ -38,18 +37,70 @@ def addOrderItems(request):
                 "cvc": data['card-cvc'],
               },
             )
+
             stripe.PaymentMethod.attach(
-              stripe_payment.id,
+              stripe_payment_id.id,
               customer=stripe_customer.stripe_customer_id,
             )
-        else:
-            pass
 
+            payment_obj = UserPaymentMethodsStripe.objects.filter(user=user)
+
+            for pay_obj in payment_obj:
+                pay_obj.default = False
+                pay_obj.save()
+
+            default_payment_method = UserPaymentMethodsStripe.objects.create(
+                user= user,
+                stripe_payment_id= stripe_payment_id.id,
+                default= True,
+            )
+
+        payment_intent=stripe.PaymentIntent.create(
+        customer=stripe_customer.stripe_customer_id,
+        payment_method=default_payment_method.stripe_payment_id,
+        currency=currency.lower(), # you can provide any currency you want
+        amount=float(convertion))
+    else:
+        stripe_payment_id=stripe.PaymentMethod.create(
+          type="card",
+          card={
+            "number": data['card-number'],
+            "exp_month": data['card-exp-month'],
+            "exp_year": data['card-exp-year'],
+            "cvc": data['card-cvc'],
+          },
+        )
+        payment_intent=stripe.PaymentIntent.create(
+        payment_method=stripe_payment_id.id,
+        currency=currency.lower(), # you can provide any currency you want
+        amount=float(convertion))
+
+    return payment_intent
+
+
+
+
+@api_view(['POST'])
+def addOrderItems(request):
+    location = request.geolocation
+    currency =str(location['raw_data']['currency_code']).lower()
+    c = CurrencyConverter()
+    convertion = c.convert(float(data['totalPrice']), 'MXN', currency.upper())
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    user = None
+    data = request.data
+
+    #Verify payment methods in stripe
+    print("USER IS AUTHENTICATED: ", request.user.is_authenticated)
     orderItems = data['orderItems']
-
     if orderItems and len(orderItems) == 0:
         return Response({'detail': 'No order items'}, status=status.HTTP_400_BAD_REQUEST)
     else:
+        if request.user.is_authenticated:
+            user = request.user
+        if str(data['paymentMethod']).lower() == 'stripe':
+            payment_intent=stripe_payment_management(data, user, convertion, currency)
+
         # (1) Create order
         order = Order.objects.create(
             user = user,

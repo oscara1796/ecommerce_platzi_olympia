@@ -19,7 +19,7 @@ class UserStripe(models.Model):
 
 class UserPaymentMethodsStripe(models.Model):
     _id = models.AutoField(primary_key=True, editable=False)
-    user = models.OneToOneField(User,on_delete=models.CASCADE, null=True, blank=True)
+    user = models.ForeignKey(User,on_delete=models.CASCADE, null=True, blank=True)
     stripe_payment_id= models.CharField(max_length=100, verbose_name= "stripe ")
     default = models.BooleanField(default=True, verbose_name="default")
     createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")

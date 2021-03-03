@@ -7,10 +7,11 @@ from base.serializer import *
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth.models import User
-from base.models import UserStripe, UserPaymentMethodsStripe
+from base.models import UserStripe, UserPaymentMethodsStripe, ShippingAdress
 from django.contrib.auth.hashers import make_password
 from rest_framework import status
 import stripe
+import json
 
 
 
@@ -151,18 +152,19 @@ def addPaymentMethod(request, pk):
       },
     )
     stripe_customer = user.userstripe
+    print(stripe_customer)
 
     stripe.PaymentMethod.attach(
       stripe_payment_id.id,
       customer=stripe_customer.stripe_customer_id,
     )
 
-    payment_obj = UserPaymentMethodsStripe.objects.all()
+    payment_obj = UserPaymentMethodsStripe.objects.filter(user=user)
 
     for pay_obj in payment_obj:
         pay_obj.default = False
         pay_obj.save()
-    
+
     paymentuser_method_stripe = UserPaymentMethodsStripe.objects.create(
         user= user,
         stripe_payment_id= stripe_payment_id.id,
@@ -170,10 +172,31 @@ def addPaymentMethod(request, pk):
     )
     return Response('payment added')
 
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def changeDefaultPaymentMethod(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+
+    payment_methods =UserPaymentMethodsStripe.objects.filter(user=user)
+
+    for pay_obj in payment_methods:
+        if pay_obj.stripe_payment_id != data['id']:
+            pay_obj.default = False
+            pay_obj.save()
+        else:
+            pay_obj.default = True
+            pay_obj.save()
+
+    return Response(' default payment changed')
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def retrievePaymentMethods(request, pk):
+    user = User.objects.get(id=pk)
+    payment_methods =UserPaymentMethodsStripe.objects.filter(user=user)
+    print(payment_methods)
     try:
         stripe.api_key = settings.STRIPE_SECRET_KEY
         user = User.objects.get(id=pk)
@@ -182,8 +205,97 @@ def retrievePaymentMethods(request, pk):
           customer=stripe_customer.stripe_customer_id,
           type="card",
         )
-        print(users_payment_methods)
-        return Response(users_payment_methods)
+
+        json_obj = {}
+        json_obj['data']= []
+        print(json_obj)
+        for method in users_payment_methods.data:
+            for pay_method in payment_methods:
+                if method.id == pay_method.stripe_payment_id:
+                    obj= method
+                    if pay_method.default == True:
+                        obj['default'] = True
+                    else:
+                        obj['default'] = False
+                    obj['_id'] = pay_method._id
+                    json_obj['data'].append(obj)
+
+        # print(users_payment_methods)
+        return Response(json_obj)
     except:
         message = {'detail': 'User does not have payment methods'}
         return Response(message, status= status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def addShippingaddress(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+
+    shippings_adds =ShippingAdress.objects.filter(user= user)
+
+    for shipping_add in shippings_adds:
+        shipping_add.default = False
+        shipping_add.save()
+
+    shipping_address =ShippingAdress.objects.create(
+        user= user,
+        address = data['address'],
+        postalCode = data['postalCode'],
+        country  = data['country'],
+        city = data['city'],
+    )
+
+    return Response('Shippingaddress added')
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def retrieveShippingaddress(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+
+    shippings_adds =ShippingAdress.objects.filter(user= user)
+    serializer = ShippingAdressSerializer(shippings_adds, many= True)
+
+    return Response(serializer.data)
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def changeDefaultShippingaddress(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+
+    shippings =ShippingAdress.objects.filter(user=user)
+
+    for shippings_adds in shippings:
+        if int(shippings_adds._id) != int(data['_id']):
+            shippings_adds.default = False
+            shippings_adds.save()
+        else:
+            shippings_adds.default = True
+            shippings_adds.save()
+
+    return Response(' default shippings_adds changed')
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def deleteShippingaddress(request, pk):
+    user = User.objects.get(id=pk)
+    data = request.data
+
+    shipping =ShippingAdress.objects.get(_id=data['_id'])
+
+    shippings =ShippingAdress.objects.filter(user=user)
+
+    if len(shippings) >= 2 and shipping.default == True:
+        for shipping_add in shippings:
+            if shipping_add._id != shipping._id:
+                shipping_add.default  = True
+                shipping_add.save()
+                break;
+
+    shipping.delete()
+
+    return Response('shipping deleted')
