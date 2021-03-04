@@ -131,7 +131,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ecommerce',
         'USER': 'oscar',
-        'PASSWORD': os.environ.get(DB_PASS),
+        'PASSWORD': os.environ.get('DB_PASS'),
         'HOST': 'ecommerce-identifier.couz3vjhuge4.us-east-2.rds.amazonaws.com',
         'PORT': '5432'
     }
