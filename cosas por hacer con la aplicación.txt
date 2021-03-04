@@ -62,6 +62,8 @@
 		*si no tiene dirección
 			crear una dirección de envio guardarla y hacerla default
 
+***TERMINADO
+
 -Cliente le dio pagar:
 	Si la orden tiene payment_method stripe:
 		*traer el objeto payment intent
