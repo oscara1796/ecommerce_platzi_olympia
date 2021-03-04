@@ -65,7 +65,7 @@ class ReviewAdmin(admin.ModelAdmin):
 
 class OrderAdmin(admin.ModelAdmin):
     readonly_fields = ('createdAt','deliveredAT', 'paidAt')
-    list_display = ('_id','user', 'isPaid', 'totalPrice','paymentMethod')
+    list_display = ('_id','user', 'isPaid', 'totalPrice','paymentMethod', 'stripe_payment_intent')
     list_filter =('isPaid',)
     ordering = ('createdAt','deliveredAT', 'paidAt')
 

@@ -20,7 +20,7 @@ class UserStripe(models.Model):
 class UserPaymentMethodsStripe(models.Model):
     _id = models.AutoField(primary_key=True, editable=False)
     user = models.ForeignKey(User,on_delete=models.CASCADE, null=True, blank=True)
-    stripe_payment_id= models.CharField(max_length=100, verbose_name= "stripe ")
+    stripe_payment_id= models.CharField(max_length=100, verbose_name= "stripe payment id")
     default = models.BooleanField(default=True, verbose_name="default")
     createdAt= models.DateTimeField(auto_now_add=True, verbose_name= "Fecha de Creación")
 
@@ -93,6 +93,7 @@ class Review(models.Model):
 class Order(models.Model):
     user= models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     paymentMethod = models.CharField(max_length=200, null=True, blank=True, verbose_name= "Metodo de pago")
+    stripe_payment_intent = models.CharField(max_length=200, null=True, blank=True, verbose_name= "payment intent stripe")
     taxtPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Impuesto")
     shippingPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Costo de envio")
     discount = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True, verbose_name= "Descuento")

@@ -32,6 +32,24 @@ def getTopProducts(request):
     return Response(serializer.data)
 
 
+@api_view(['GET'])
+def getTopProductsPerCategory(request):
+    categories =  Category.objects.all()
+
+    top_products_per_category = []
+
+    for category in categories:
+        top_products_per_category += category.product_set.filter(rating__gte=4).order_by('rating')[0:2]
+
+    for product in top_products_per_category:
+        for duplicate in top_products_per_category:
+            if product._id == duplicate._id:
+                top_products_per_category.remove(product)
+
+    serializer = ProductSerializer(top_products_per_category, many=True)
+    return Response(serializer.data)
+
+
 
 
 @api_view(['GET'])

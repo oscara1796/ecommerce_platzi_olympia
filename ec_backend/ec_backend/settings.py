@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'rest_framework',
     #corse headers
     'corsheaders',
+    # STORAGES
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -127,8 +129,12 @@ WSGI_APPLICATION = 'ec_backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'ecommerce',
+        'USER': 'oscar',
+        'PASSWORD': '17dejunio',
+        'HOST': 'ecommerce-identifier.couz3vjhuge4.us-east-2.rds.amazonaws.com',
+        'PORT': '5432'
     }
 }
 
@@ -181,6 +187,14 @@ MEDIA_ROOT = 'static/images'
 #CORSE_HEADERS
 
 CORS_ALLOW_ALL_ORIGINS = True
+
+# DJANGO STORAGES
+
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+AWS_ACCESS_KEY_ID = "AKIAXJHCQBISCHQ6RFBL"
+AWS_SECRET_ACCESS_KEY = "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"
+AWS_QUERYSTRING_AUTH= False
+AWS_STORAGE_BUCKET_NAME = 'ecommerce-bucket-platzi'
 
 #STRIPE
 

@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
@@ -11,12 +11,13 @@ from rest_framework import status
 from decimal import Decimal
 from datetime import datetime
 from currency_converter import CurrencyConverter
+import stripe
 
 
-def stripe_payment_management(data, user, convertion, currency):
+def stripe_payment_management(data, user, request, convertion, currency):
     stripe.api_key = settings.STRIPE_SECRET_KEY
     payment_intent= None
-    if user.is_authenticated:
+    if request.user.is_authenticated:
         stripe_customer = user.userstripe
         payment_methods =UserPaymentMethodsStripe.objects.filter(user=user)
         default_payment_method= None
@@ -31,10 +32,10 @@ def stripe_payment_management(data, user, convertion, currency):
             stripe_payment_id=stripe.PaymentMethod.create(
               type="card",
               card={
-                "number": data['card-number'],
-                "exp_month": data['card-exp-month'],
-                "exp_year": data['card-exp-year'],
-                "cvc": data['card-cvc'],
+                "number": data['payInfo']['card-number'],
+                "exp_month": data['payInfo']['card-exp-month'],
+                "exp_year": data['payInfo']['card-exp-year'],
+                "cvc": data['payInfo']['card-cvc'],
               },
             )
 
@@ -59,21 +60,21 @@ def stripe_payment_management(data, user, convertion, currency):
         customer=stripe_customer.stripe_customer_id,
         payment_method=default_payment_method.stripe_payment_id,
         currency=currency.lower(), # you can provide any currency you want
-        amount=float(convertion))
+        amount=int(convertion*100))
     else:
         stripe_payment_id=stripe.PaymentMethod.create(
           type="card",
           card={
-            "number": data['card-number'],
-            "exp_month": data['card-exp-month'],
-            "exp_year": data['card-exp-year'],
-            "cvc": data['card-cvc'],
+            "number": data['payInfo']['card-number'],
+            "exp_month": data['payInfo']['card-exp-month'],
+            "exp_year": data['payInfo']['card-exp-year'],
+            "cvc": data['payInfo']['card-cvc'],
           },
         )
         payment_intent=stripe.PaymentIntent.create(
         payment_method=stripe_payment_id.id,
         currency=currency.lower(), # you can provide any currency you want
-        amount=float(convertion))
+        amount=int(convertion*100))
 
     return payment_intent
 
@@ -82,13 +83,17 @@ def stripe_payment_management(data, user, convertion, currency):
 
 @api_view(['POST'])
 def addOrderItems(request):
+    data = request.data
     location = request.geolocation
     currency =str(location['raw_data']['currency_code']).lower()
     c = CurrencyConverter()
-    convertion = c.convert(float(data['totalPrice']), 'MXN', currency.upper())
+    convertion = round(c.convert(float(data['totalPrice']), 'MXN', currency.upper()), 2)
+    print(convertion)
     stripe.api_key = settings.STRIPE_SECRET_KEY
     user = None
-    data = request.data
+    payment_intent = None
+    default_shipping_address = None
+    order= None
 
     #Verify payment methods in stripe
     print("USER IS AUTHENTICATED: ", request.user.is_authenticated)
@@ -98,17 +103,36 @@ def addOrderItems(request):
     else:
         if request.user.is_authenticated:
             user = request.user
+            user_shippings = ShippingAdress.objects.filter(user=user)
+            if len(user_shippings) !=0:
+                for user_shipping in user_shippings:
+                    if user_shipping.default == True:
+                        default_shipping_address = user_shipping
+                        break
+
         if str(data['paymentMethod']).lower() == 'stripe':
-            payment_intent=stripe_payment_management(data, user, convertion, currency)
+            payment_intent=stripe_payment_management(data, user, request, convertion, currency)
 
         # (1) Create order
-        order = Order.objects.create(
-            user = user,
-            paymentMethod = data['paymentMethod'],
-            taxtPrice = Decimal(data['taxtPrice']),
-            shippingPrice = Decimal(data['shippingPrice']),
-            totalPrice = Decimal(data['totalPrice']),
-        )
+
+        if payment_intent:
+
+            order = Order.objects.create(
+                user = user,
+                paymentMethod = data['paymentMethod'],
+                taxtPrice = Decimal(data['taxtPrice']),
+                shippingPrice = Decimal(data['shippingPrice']),
+                totalPrice = Decimal(data['totalPrice']),
+                stripe_payment_intent = payment_intent.id,
+            )
+        else:
+            order = Order.objects.create(
+                user = user,
+                paymentMethod = data['paymentMethod'],
+                taxtPrice = Decimal(data['taxtPrice']),
+                shippingPrice = Decimal(data['shippingPrice']),
+                totalPrice = Decimal(data['totalPrice']),
+            )
         coupon = str(data['coupon'])
         coupon_exists = Coupon.objects.filter(code=coupon.upper()).exists()
         if coupon_exists:
@@ -119,18 +143,33 @@ def addOrderItems(request):
                 order.discount =  Decimal(order.totalPrice)*Decimal(coupon.percentage)
             order.save()
         # (2) Create shipping address
-        shipping = ShippingAdress.objects.create(
-            order = order,
-            address = data['ShippingAdress']['address'],
-            postalCode = data['ShippingAdress']['postalCode'],
-            country  = data['ShippingAdress']['country'],
-            city = data['ShippingAdress']['city'],
-        )
 
-        if not request.user.is_authenticated:
-            shipping.receiver_first_name = data['ShippingAdress']['receiver_first_name']
-            shipping.receiver_last_name = data['ShippingAdress']['receiver_last_name']
-            shipping.save()
+
+        if default_shipping_address:
+            default_shipping_address.order = order
+            default_shipping_address.save()
+        else:
+            if request.user.is_authenticated:
+                shipping = ShippingAdress.objects.create(
+                    user=user,
+                    order = order,
+                    address = data['ShippingAdress']['address'],
+                    postalCode = data['ShippingAdress']['postalCode'],
+                    country  = data['ShippingAdress']['country'],
+                    city = data['ShippingAdress']['city'],
+                )
+            else:
+                shipping = ShippingAdress.objects.create(
+                    order = order,
+                    address = data['ShippingAdress']['address'],
+                    postalCode = data['ShippingAdress']['postalCode'],
+                    country  = data['ShippingAdress']['country'],
+                    city = data['ShippingAdress']['city'],
+                )
+                shipping.receiver_first_name = data['ShippingAdress']['receiver_first_name']
+                shipping.receiver_last_name = data['ShippingAdress']['receiver_last_name']
+                shipping.save()
+
         # (3) Create order items and set the order to  order Item  relationship
         for i in orderItems:
             product = Product.objects.get(_id =i['product'])
@@ -185,12 +224,21 @@ def getOrderById(request, pk):
 @api_view(['PUT'])
 def updateOrderToPaid(request, pk):
     order = Order.objects.get(_id=pk)
-
-    order.isPaid = True
-    order.paidAt =datetime.now()
-    order.save()
-
-    return Response('Order was paid')
+    if str(order.paymentMethod).lower() == 'stripe':
+        stripe_payment_intent= stripe.PaymentIntent.confirm(
+          order.stripe_payment_intent,
+        )
+        if stripe_payment_intent.status == "succeeded":
+            order.isPaid = True
+            order.paidAt =datetime.now()
+            order.save()
+            return Response('Order was paid')
+        else: Response({'detail':'Order can´t be paid '}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        order.isPaid = True
+        order.paidAt =datetime.now()
+        order.save()
+        return Response('Order was paid')
 
 @api_view(['PUT'])
 @permission_classes([IsAdminUser])
@@ -260,10 +308,12 @@ def createCoupon(request):
 def updateCoupon(request, pk):
     try:
         data= request.data
-
+        print(data)
+        code = data['code']
+        print(code)
         coupon = Coupon.objects.get(_id=pk)
-        coupon.name = data['name'],
-        coupon.code = data['code'],
+        coupon.name = data['name']
+        coupon.code = data['code']
         coupon.active = data['active'].lower().title()
 
         if data['discount']:

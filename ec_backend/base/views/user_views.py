@@ -85,7 +85,11 @@ def getUserById(request, pk):
 @api_view(['DELETE'])
 @permission_classes([IsAdminUser])
 def deleteUser(request, pk):
+    stripe.api_key = settings.STRIPE_SECRET_KEY
     userForDeletion = User.objects.get(id=pk)
+    usersStripe = UserStripe.objects.get(user= userForDeletion)
+    stripe_customer=stripe.Customer.delete(usersStripe.stripe_customer_id)
+    usersStripe.delete()
     userForDeletion.delete()
     return Response('user deleted')
 
