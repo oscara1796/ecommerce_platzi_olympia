@@ -13,9 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 import os
 
-#password of stripe
-#equipoplatzi
-#platziolympia@gmail.com
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,7 +29,7 @@ SECRET_KEY = '(6a8&e%uvn$ym_1*c-7i%=zoy%gb4=6-2=gkn+5s21rvqhjfn4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'ecommerce-platzi.herokuapp.com/']
 
 
 # Application definition
@@ -56,6 +54,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     #Corse-headers
     'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django_ip_geolocation.middleware.IpGeolocationMiddleware',
 
     'django.middleware.security.SecurityMiddleware',
@@ -132,7 +131,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'ecommerce',
         'USER': 'oscar',
-        'PASSWORD': '17dejunio',
+        'PASSWORD': os.environ.get(DB_PASS),
         'HOST': 'ecommerce-identifier.couz3vjhuge4.us-east-2.rds.amazonaws.com',
         'PORT': '5432'
     }
@@ -182,7 +181,8 @@ STATICFILES_DIRS =[
         os.path.join(BASE_DIR, "static"),
 ]
 
-MEDIA_ROOT = 'static/images'
+MEDIA_ROOT =  BASE_DIR / 'static/images'
+STATIC_ROOT =  BASE_DIR / 'staticfiles'
 
 #CORSE_HEADERS
 
@@ -191,14 +191,14 @@ CORS_ALLOW_ALL_ORIGINS = True
 # DJANGO STORAGES
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-AWS_ACCESS_KEY_ID = "AKIAXJHCQBISCHQ6RFBL"
-AWS_SECRET_ACCESS_KEY = "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"
+AWS_ACCESS_KEY_ID = os.environ.get(AWS_ACCESS_KEY_ID)
+AWS_SECRET_ACCESS_KEY = os.environ.get(AWS_SECRET_ACCESS_KEY)
 AWS_QUERYSTRING_AUTH= False
 AWS_STORAGE_BUCKET_NAME = 'ecommerce-bucket-platzi'
 
 #STRIPE
 
-STRIPE_SECRET_KEY = "sk_test_51IQ2A6HsQqQz73R6wiTlwm0lsh4ikn8dxUOipHZVSOhcrQeumrSKEHmrPoK4f5mwRe0ZYM9CI922z1WzhlhE5aBM00yDvUcCsh"
+STRIPE_SECRET_KEY = os.environ.get(STRIPE_SECRET_KEY)
 
 
 #GEOLOCATION
@@ -215,3 +215,6 @@ IP_GEOLOCATION_SETTINGS = {
     'FORCE_IP_ADDR': '189.203.100.189',
     'USER_CONSENT_VALIDATOR': None
 }
+
+if os.getcwd() == '/app':
+    DEBUG = False
