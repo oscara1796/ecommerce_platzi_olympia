@@ -29,7 +29,7 @@ SECRET_KEY = '(6a8&e%uvn$ym_1*c-7i%=zoy%gb4=6-2=gkn+5s21rvqhjfn4'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'ecommerce-platzi.herokuapp.com/']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'https://ecommerce-platzi.herokuapp.com']
 
 
 # Application definition
